@@ -10,8 +10,11 @@ public class Checkout {
 
     private final List<CartItem> cartItems;
 
+    private final PriceRule priceRule;
+
     public Checkout(PriceRule pricesRule) {
         this.cartItems = new ArrayList<>();
+        this.priceRule = pricesRule;
     }
 
     public void scan(CartItem cartItem) {
@@ -20,6 +23,11 @@ public class Checkout {
 
     public List<CartItem> getCartItems() {
         return cartItems;
+    }
+
+    public Double getCartTotal() {
+        // FIXME: Apply price rules
+        return cartItems.stream().mapToDouble(ci -> ci.getPrice()).sum();
     }
 
 }
