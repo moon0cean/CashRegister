@@ -1,20 +1,22 @@
 package org.yk.nextail.price;
 
+import java.util.List;
+
 /**
- *
+ * Class responsible to define conditions and actions for a given pricing rule.
  */
 public class PriceRule {
-    private final PriceRuleCondition condition;
-    private final PriceRuleAction action;
+    private final List<PriceRuleCondition.Builder<?>> conditionBuilders;
+    private final List<PriceRuleAction.Builder> actionBuilders;
 
     public PriceRule() {
-        this.condition = null;
-        this.action = null;
+        this.conditionBuilders = null;
+        this.actionBuilders = null;
     }
 
-    public PriceRule(PriceRuleCondition condition, PriceRuleAction action) {
-        this.condition = condition;
-        this.action = action;
+    public PriceRule(List<PriceRuleCondition.Builder<?>> conditionBuilders, List<PriceRuleAction.Builder> actionBuilders) {
+        this.conditionBuilders = conditionBuilders;
+        this.actionBuilders = actionBuilders;
     }
 
     public static class PriceRuleCondition<V> {
@@ -24,7 +26,8 @@ public class PriceRule {
         private V rightValue;
 
         public enum PriceRuleConditionType {
-            PRODUCT_QUANTITY
+            PRODUCT_QUANTITY,
+            PRODUCT_CODE
         }
 
         public enum PriceRuleConditionOperator {
@@ -37,50 +40,63 @@ public class PriceRule {
         }
 
         private PriceRuleCondition() {
-
         }
 
         public static class Builder<V> {
             private PriceRuleCondition priceRuleCondition = new PriceRuleCondition<V>();
 
-            public PriceRuleCondition addConditionOperator(PriceRuleConditionOperator conditionOperator) {
+            public PriceRuleCondition.Builder<V> addConditionOperator(PriceRuleConditionOperator conditionOperator) {
                 priceRuleCondition.conditionOperator = conditionOperator;
-                return priceRuleCondition;
+                return this;
             }
 
-            public PriceRuleCondition<V> addConditionType(PriceRuleConditionType conditionType) {
+            public PriceRuleCondition.Builder<V> addConditionType(PriceRuleConditionType conditionType) {
                 priceRuleCondition.conditionType = conditionType;
-                return priceRuleCondition;
+                return this;
             }
 
-            public PriceRuleCondition<V> addConditionLeftValue(V leftValue) {
+            public PriceRuleCondition.Builder<V> addConditionLeftValue(V leftValue) {
                 priceRuleCondition.leftValue = leftValue;
-                return priceRuleCondition;
+                return this;
             }
 
-            public PriceRuleCondition<V> addConditionRightValue(V rightValue) {
+            public PriceRuleCondition.Builder<V> addConditionRightValue(V rightValue) {
                 priceRuleCondition.rightValue = rightValue;
+                return this;
+            }
+
+            public PriceRuleCondition build() {
                 return priceRuleCondition;
             }
         }
     }
 
-    public static class PriceRuleAction {
+    public static class PriceRuleAction<V> {
         private PriceRuleActionType priceRuleActionType;
+        private V value;
 
         public enum PriceRuleActionType {
             PRODUCT_DISCOUNT_PERCENT,
-            PRODUCT_PRICE
+            PRODUCT_FIXED_PRICE
         }
 
         private PriceRuleAction() {
         }
 
-        public static class Builder {
+        public static class Builder<V> {
             PriceRuleAction priceRuleAction = new PriceRuleAction();
 
-            PriceRuleAction addActionType(PriceRuleActionType actionType) {
+            public PriceRuleAction.Builder addActionType(PriceRuleActionType actionType) {
                 priceRuleAction.priceRuleActionType = actionType;
+                return this;
+            }
+
+            public PriceRuleAction.Builder addActionValue(V value) {
+                priceRuleAction.value = value;
+                return this;
+            }
+
+            public PriceRuleAction build() {
                 return priceRuleAction;
             }
         }
