@@ -15,12 +15,14 @@ import java.util.List;
 public class CheckoutTest {
     private static final Logger LOG = LoggerFactory.getLogger(CheckoutTest.class);
     private static List<CartItem> cartItemList = new ArrayList<>();
+    private static List<PriceRule> priceRulesList = new ArrayList<>();
     private static List<List<CartItem>> checkoutItemList = new ArrayList<>();
 
     @BeforeClass
     public static void init() {
         LOG.info("Initializing Nextail Cash-Register Checkout test data");
         createCartItems();
+        createPriceRules();
         populateCheckout();
     }
 
@@ -28,6 +30,15 @@ public class CheckoutTest {
         cartItemList.add(new CartItem("VOUCHER", "Gift Card", 5.00));
         cartItemList.add(new CartItem("TSHIRT", "Summer T-Shirt", 20.00));
         cartItemList.add(new CartItem("PANTS", "Summer Pants", 7.50));
+    }
+
+    private static void createPriceRules() {
+        PriceRule.PriceRuleCondition.Builder<Integer> conditionBuilder = new PriceRule.PriceRuleCondition.Builder<>();
+        conditionBuilder.addConditionOperator(PriceRule.PriceRuleCondition.PriceRuleConditionOperator.GREATER_THAN_EQUALS);
+        conditionBuilder.addConditionType(PriceRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_QUANTITY);
+        conditionBuilder.addConditionRightValue(3);
+        PriceRule.PriceRuleAction.Builder actionBuilder = new PriceRule.PriceRuleAction.Builder();
+        new PriceRule();
     }
 
     private static void populateCheckout() {
@@ -50,7 +61,6 @@ public class CheckoutTest {
     public void usingExample2PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
         final Checkout checkoutExample2 = new Checkout(new PriceRule());
         checkoutItemList.get(1).forEach(coi -> checkoutExample2.scan(coi));
-
         MatcherAssert.assertThat("Example 2 total amount is 25.00€: ", checkoutExample2.getCartTotal().compareTo(25.00) == 0);
     }
 
