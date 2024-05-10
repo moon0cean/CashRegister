@@ -27,9 +27,9 @@ public class CheckoutTest {
     }
 
     private static void createCartItems() {
-        cartItemList.add(new CartItem("VOUCHER", "Gift Card", 5.00));
-        cartItemList.add(new CartItem("TSHIRT", "Summer T-Shirt", 20.00));
-        cartItemList.add(new CartItem("PANTS", "Summer Pants", 7.50));
+        cartItemList.add(new CartItem("VOUCHER", "Gift Card", 5.00, "€"));
+        cartItemList.add(new CartItem("TSHIRT", "Summer T-Shirt", 20.00, "€"));
+        cartItemList.add(new CartItem("PANTS", "Summer Pants", 7.50, "€"));
     }
 
     private static void createPriceRules() {

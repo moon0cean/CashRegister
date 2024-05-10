@@ -5,11 +5,13 @@ public class CartItem {
     private final String code;
     private final String name;
     private final Double price;
+    private final String currency;
 
-    public CartItem(String code, String name, Double price) {
+    public CartItem(String code, String name, Double price, String currency) {
         this.code = code;
         this.name = name;
         this.price = price;
+        this.currency = currency;
     }
 
     public String getCode() {
@@ -22,5 +24,9 @@ public class CartItem {
 
     public Double getPrice() {
         return price;
+    }
+
+    public String getCurrency() {
+        return currency;
     }
 }
