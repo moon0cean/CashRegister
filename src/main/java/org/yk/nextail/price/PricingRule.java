@@ -6,17 +6,25 @@ import java.util.List;
  * Class responsible to define conditions and actions for a given pricing rule.
  */
 public class PricingRule {
-    private final List<PriceRuleCondition.Builder<?>> conditionBuilders;
-    private final List<PriceRuleAction.Builder> actionBuilders;
+    private final List<PriceRuleCondition<?>> conditions;
+    private final List<PriceRuleAction<?>> actions;
 
     public PricingRule() {
-        this.conditionBuilders = null;
-        this.actionBuilders = null;
+        this.conditions = null;
+        this.actions = null;
     }
 
-    public PricingRule(List<PriceRuleCondition.Builder<?>> conditionBuilders, List<PriceRuleAction.Builder> actionBuilders) {
-        this.conditionBuilders = conditionBuilders;
-        this.actionBuilders = actionBuilders;
+    public PricingRule(List<PriceRuleCondition<?>> conditions, List<PriceRuleAction<?>> actions) {
+        this.conditions = conditions;
+        this.actions = actions;
+    }
+
+    public List<PriceRuleCondition<?>> getConditions() {
+        return conditions;
+    }
+
+    public List<PriceRuleAction<?>> getActions() {
+        return actions;
     }
 
     /**
@@ -28,11 +36,10 @@ public class PricingRule {
     public static class PriceRuleCondition<V> {
         private PriceRuleConditionType conditionType;
         private PriceRuleConditionOperator conditionOperator;
-        private V leftValue;
-        private V rightValue;
+        private V conditionValue;
 
         public enum PriceRuleConditionType {
-            PRODUCT_QUANTITY,
+            PRODUCT_QUANTITY_IN_CHECKOUT,
             PRODUCT_CODE
         }
 
@@ -48,6 +55,18 @@ public class PricingRule {
         private PriceRuleCondition() {
         }
 
+        public PriceRuleConditionType getConditionType() {
+            return conditionType;
+        }
+
+        public PriceRuleConditionOperator getConditionOperator() {
+            return conditionOperator;
+        }
+
+        public V getConditionValue() {
+            return conditionValue;
+        }
+
         public static class Builder<V> {
             private PriceRuleCondition priceRuleCondition = new PriceRuleCondition<V>();
 
@@ -61,19 +80,24 @@ public class PricingRule {
                 return this;
             }
 
-            public PriceRuleCondition.Builder<V> addConditionLeftValue(V leftValue) {
-                priceRuleCondition.leftValue = leftValue;
-                return this;
-            }
-
-            public PriceRuleCondition.Builder<V> addConditionRightValue(V rightValue) {
-                priceRuleCondition.rightValue = rightValue;
+            public PriceRuleCondition.Builder<V> addConditionValue(V conditionValue) {
+                priceRuleCondition.conditionValue = conditionValue;
                 return this;
             }
 
             public PriceRuleCondition build() {
+                // FIXME: ensure a valid condition is created and use defaults if not (when possible)
                 return priceRuleCondition;
             }
+        }
+
+        @Override
+        public String toString() {
+            return "PriceRuleCondition{" +
+                    "conditionType=" + conditionType +
+                    ", conditionOperator=" + conditionOperator +
+                    ", conditionValue=" + conditionValue +
+                    '}';
         }
     }
 
@@ -109,8 +133,17 @@ public class PricingRule {
             }
 
             public PriceRuleAction build() {
+                // FIXME: ensure a valid action is created and use defaults if not (when possible)
                 return priceRuleAction;
             }
+        }
+
+        @Override
+        public String toString() {
+            return "PriceRuleAction{" +
+                    "priceRuleActionType=" + priceRuleActionType +
+                    ", value=" + value +
+                    '}';
         }
     }
 }

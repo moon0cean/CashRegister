@@ -33,23 +33,42 @@ public class CheckoutTest {
     }
 
     private static void createPriceRules() {
-        List<PricingRule.PriceRuleCondition.Builder<?>> conditionBuilders = List.of(
+        // 2-for-1 pricing rule for VOUCHER
+        List<PricingRule.PriceRuleCondition<?>> conditions = List.of(
                 new PricingRule.PriceRuleCondition.Builder<String>()
                         .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.EQUALS)
                         .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_CODE)
-                        .addConditionRightValue("TSHIRT"),
+                        .addConditionValue("TSHIRT")
+                        .build(),
                 new PricingRule.PriceRuleCondition.Builder<Integer>()
                         .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.GREATER_THAN_EQUALS)
-                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_QUANTITY)
-                        .addConditionRightValue(3)
+                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_QUANTITY_IN_CHECKOUT)
+                        .addConditionValue(3)
+                        .build()
         );
-
-        List<PricingRule.PriceRuleAction.Builder> actionBuilders = List.of(
+        List<PricingRule.PriceRuleAction<?>> actions = List.of(
                 new PricingRule.PriceRuleAction.Builder()
                         .addActionType(PricingRule.PriceRuleAction.PriceRuleActionType.PRODUCT_FIXED_PRICE)
                         .addActionValue(19.00)
+                        .build()
         );
-        priceRulesList.add(new PricingRule(conditionBuilders, actionBuilders));
+        priceRulesList.add(new PricingRule(conditions, actions));
+
+        // Unit price 19€ for TSHIRT items when cart has >= 3 cart items of that type
+        conditions = List.of(
+                new PricingRule.PriceRuleCondition.Builder<String>()
+                        .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.EQUALS)
+                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_CODE)
+                        .addConditionValue("VOUCHER")
+                        .build()
+        );
+        actions = List.of(
+                new PricingRule.PriceRuleAction.Builder()
+                        .addActionType(PricingRule.PriceRuleAction.PriceRuleActionType.PRODUCT_DISCOUNT_PERCENT)
+                        .addActionValue(50)
+                        .build()
+        );
+        priceRulesList.add(new PricingRule(conditions, actions));
     }
 
     private static void populateCheckout() {
@@ -63,30 +82,30 @@ public class CheckoutTest {
 
     @Test
     public void usingExample1PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample1 = new Checkout(new PricingRule());
+        final Checkout checkoutExample1 = new Checkout(priceRulesList);
         checkoutItemList.get(0).forEach(coi -> checkoutExample1.scan(coi));
-        MatcherAssert.assertThat("Example 1 total amount is 32.5€: ", checkoutExample1.getCartTotal().compareTo(32.5) == 0);
+        MatcherAssert.assertThat("Example 1 total amount expected 32.5€", checkoutExample1.getCartTotal().compareTo(32.5) == 0);
     }
 
     @Test
     public void usingExample2PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample2 = new Checkout(new PricingRule());
+        final Checkout checkoutExample2 = new Checkout(priceRulesList);
         checkoutItemList.get(1).forEach(coi -> checkoutExample2.scan(coi));
-        MatcherAssert.assertThat("Example 2 total amount is 25.00€: ", checkoutExample2.getCartTotal().compareTo(25.00) == 0);
+        MatcherAssert.assertThat("Example 2 total amount expected 25.00€", checkoutExample2.getCartTotal().compareTo(25.00) == 0);
     }
 
     @Test
     public void usingExample3PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample3 = new Checkout(new PricingRule());
+        final Checkout checkoutExample3 = new Checkout(priceRulesList);
         checkoutItemList.get(2).forEach(coi -> checkoutExample3.scan(coi));
-        MatcherAssert.assertThat("Example 3 total amount is 81.00€: ", checkoutExample3.getCartTotal().compareTo(81.00) == 0);
+        MatcherAssert.assertThat("Example 3 total amount expected 81.00€", checkoutExample3.getCartTotal().compareTo(81.00) == 0);
     }
 
     @Test
     public void usingExample4PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample4 = new Checkout(new PricingRule());
+        final Checkout checkoutExample4 = new Checkout(priceRulesList);
         checkoutItemList.get(3).forEach(coi -> checkoutExample4.scan(coi));
-        MatcherAssert.assertThat("Example 4 total amount is 74.50€: ", checkoutExample4.getCartTotal().compareTo(74.5) == 0);
+        MatcherAssert.assertThat("Example 4 total amount expected 74.50€", checkoutExample4.getCartTotal().compareTo(74.5) == 0);
     }
 
 }
