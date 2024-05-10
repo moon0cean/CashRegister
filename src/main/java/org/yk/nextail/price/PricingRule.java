@@ -5,20 +5,26 @@ import java.util.List;
 /**
  * Class responsible to define conditions and actions for a given pricing rule.
  */
-public class PriceRule {
+public class PricingRule {
     private final List<PriceRuleCondition.Builder<?>> conditionBuilders;
     private final List<PriceRuleAction.Builder> actionBuilders;
 
-    public PriceRule() {
+    public PricingRule() {
         this.conditionBuilders = null;
         this.actionBuilders = null;
     }
 
-    public PriceRule(List<PriceRuleCondition.Builder<?>> conditionBuilders, List<PriceRuleAction.Builder> actionBuilders) {
+    public PricingRule(List<PriceRuleCondition.Builder<?>> conditionBuilders, List<PriceRuleAction.Builder> actionBuilders) {
         this.conditionBuilders = conditionBuilders;
         this.actionBuilders = actionBuilders;
     }
 
+    /**
+     * Defines a rule condition by constructing through a builder the right and left value and the conditional operator
+     * to finally evaluate according to the condition type passed.
+     *
+     * @param <V> type of value to be compared with
+     */
     public static class PriceRuleCondition<V> {
         private PriceRuleConditionType conditionType;
         private PriceRuleConditionOperator conditionOperator;
@@ -71,6 +77,12 @@ public class PriceRule {
         }
     }
 
+    /**
+     * Defines a rule action by constructing through a builder to apply to checkout based on
+     * the action type passed.
+     *
+     * @param <V>
+     */
     public static class PriceRuleAction<V> {
         private PriceRuleActionType priceRuleActionType;
         private V value;

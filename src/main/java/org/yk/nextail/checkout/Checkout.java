@@ -1,7 +1,7 @@
 package org.yk.nextail.checkout;
 
 import org.yk.nextail.cart.CartItem;
-import org.yk.nextail.price.PriceRule;
+import org.yk.nextail.price.PricingRule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,9 +10,9 @@ public class Checkout {
 
     private final List<CartItem> cartItems;
 
-    private final PriceRule priceRule;
+    private final PricingRule priceRule;
 
-    public Checkout(PriceRule pricesRule) {
+    public Checkout(PricingRule pricesRule) {
         this.cartItems = new ArrayList<>();
         this.priceRule = pricesRule;
     }

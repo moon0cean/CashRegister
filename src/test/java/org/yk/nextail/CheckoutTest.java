@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yk.nextail.cart.CartItem;
 import org.yk.nextail.checkout.Checkout;
-import org.yk.nextail.price.PriceRule;
+import org.yk.nextail.price.PricingRule;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
 public class CheckoutTest {
     private static final Logger LOG = LoggerFactory.getLogger(CheckoutTest.class);
     private static List<CartItem> cartItemList = new ArrayList<>();
-    private static List<PriceRule> priceRulesList = new ArrayList<>();
+    private static List<PricingRule> priceRulesList = new ArrayList<>();
     private static List<List<CartItem>> checkoutItemList = new ArrayList<>();
 
     @BeforeClass
@@ -33,12 +33,23 @@ public class CheckoutTest {
     }
 
     private static void createPriceRules() {
-        PriceRule.PriceRuleCondition.Builder<Integer> conditionBuilder = new PriceRule.PriceRuleCondition.Builder<>();
-        conditionBuilder.addConditionOperator(PriceRule.PriceRuleCondition.PriceRuleConditionOperator.GREATER_THAN_EQUALS);
-        conditionBuilder.addConditionType(PriceRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_QUANTITY);
-        conditionBuilder.addConditionRightValue(3);
-        PriceRule.PriceRuleAction.Builder actionBuilder = new PriceRule.PriceRuleAction.Builder();
-        new PriceRule();
+        List<PricingRule.PriceRuleCondition.Builder<?>> conditionBuilders = List.of(
+                new PricingRule.PriceRuleCondition.Builder<String>()
+                        .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.EQUALS)
+                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_CODE)
+                        .addConditionRightValue("TSHIRT"),
+                new PricingRule.PriceRuleCondition.Builder<Integer>()
+                        .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.GREATER_THAN_EQUALS)
+                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_QUANTITY)
+                        .addConditionRightValue(3)
+        );
+
+        List<PricingRule.PriceRuleAction.Builder> actionBuilders = List.of(
+                new PricingRule.PriceRuleAction.Builder()
+                        .addActionType(PricingRule.PriceRuleAction.PriceRuleActionType.PRODUCT_FIXED_PRICE)
+                        .addActionValue(19.00)
+        );
+        priceRulesList.add(new PricingRule(conditionBuilders, actionBuilders));
     }
 
     private static void populateCheckout() {
@@ -52,28 +63,28 @@ public class CheckoutTest {
 
     @Test
     public void usingExample1PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample1 = new Checkout(new PriceRule());
+        final Checkout checkoutExample1 = new Checkout(new PricingRule());
         checkoutItemList.get(0).forEach(coi -> checkoutExample1.scan(coi));
         MatcherAssert.assertThat("Example 1 total amount is 32.5€: ", checkoutExample1.getCartTotal().compareTo(32.5) == 0);
     }
 
     @Test
     public void usingExample2PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample2 = new Checkout(new PriceRule());
+        final Checkout checkoutExample2 = new Checkout(new PricingRule());
         checkoutItemList.get(1).forEach(coi -> checkoutExample2.scan(coi));
         MatcherAssert.assertThat("Example 2 total amount is 25.00€: ", checkoutExample2.getCartTotal().compareTo(25.00) == 0);
     }
 
     @Test
     public void usingExample3PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample3 = new Checkout(new PriceRule());
+        final Checkout checkoutExample3 = new Checkout(new PricingRule());
         checkoutItemList.get(2).forEach(coi -> checkoutExample3.scan(coi));
         MatcherAssert.assertThat("Example 3 total amount is 81.00€: ", checkoutExample3.getCartTotal().compareTo(81.00) == 0);
     }
 
     @Test
     public void usingExample4PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
-        final Checkout checkoutExample4 = new Checkout(new PriceRule());
+        final Checkout checkoutExample4 = new Checkout(new PricingRule());
         checkoutItemList.get(3).forEach(coi -> checkoutExample4.scan(coi));
         MatcherAssert.assertThat("Example 4 total amount is 74.50€: ", checkoutExample4.getCartTotal().compareTo(74.5) == 0);
     }
