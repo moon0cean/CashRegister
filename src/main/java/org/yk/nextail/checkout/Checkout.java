@@ -12,12 +12,14 @@ public class Checkout {
 
     private final PricingRule priceRule;
 
+    // TODO: Likely to be redesigned in order to not have to pass pricing rules at this stage
     public Checkout(PricingRule pricesRule) {
         this.cartItems = new ArrayList<>();
         this.priceRule = pricesRule;
     }
 
     public void scan(CartItem cartItem) {
+        // FIXME: consider concurrency
         cartItems.add(cartItem);
     }
 
