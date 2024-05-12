@@ -96,30 +96,42 @@ public class CheckoutTest {
 
     @Test
     public void usingExample1PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
+        LOG.info("Example 1 init");
         final Checkout checkoutExample1 = new Checkout(priceRulesList);
         checkoutItemList.get(0).forEach(coi -> checkoutExample1.scan(coi));
-        MatcherAssert.assertThat("Example 1 total amount expected 32.5€", checkoutExample1.getCartTotal().compareTo(32.5) == 0);
+        MatcherAssert.assertThat("Example 1: cart total amount expected 32.5€; cart total = " + checkoutExample1.getCartTotal(),
+                checkoutExample1.getCartTotal().compareTo(32.5) == 0);
+        LOG.info("Example 1 end");
     }
 
     @Test
     public void usingExample2PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
+        LOG.info("Example 2 init");
         final Checkout checkoutExample2 = new Checkout(priceRulesList);
         checkoutItemList.get(1).forEach(coi -> checkoutExample2.scan(coi));
-        MatcherAssert.assertThat("Example 2 total amount expected 25.00€", checkoutExample2.getCartTotal().compareTo(25.00) == 0);
+        MatcherAssert.assertThat("Example 2: total amount expected 25.00€; cart total = " + checkoutExample2.getCartTotal(),
+                checkoutExample2.getCartTotal().compareTo(25.00) == 0);
+        LOG.info("Example 2 end");
     }
 
     @Test
     public void usingExample3PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
+        LOG.info("Example 3 init");
         final Checkout checkoutExample3 = new Checkout(priceRulesList);
         checkoutItemList.get(2).forEach(coi -> checkoutExample3.scan(coi));
-        MatcherAssert.assertThat("Example 3 total amount expected 81.00€", checkoutExample3.getCartTotal().compareTo(81.00) == 0);
+        MatcherAssert.assertThat("Example 3: total amount expected 81.00€; cart total = " + checkoutExample3.getCartTotal(),
+                checkoutExample3.getCartTotal().compareTo(81.00) == 0);
+        LOG.info("Example 3 end");
     }
 
     @Test
     public void usingExample4PredefinedCartItems_thenScanThemSequentiallyInCheckout_totalMustMatchExpectedValueWithPricingRulesApplied() {
+        LOG.info("Example 4 init");
         final Checkout checkoutExample4 = new Checkout(priceRulesList);
         checkoutItemList.get(3).forEach(coi -> checkoutExample4.scan(coi));
-        MatcherAssert.assertThat("Example 4 total amount expected 74.50€", checkoutExample4.getCartTotal().compareTo(74.5) == 0);
+        MatcherAssert.assertThat("Example 4: total amount expected 74.50€; cart total = " + checkoutExample4.getCartTotal(),
+                checkoutExample4.getCartTotal().compareTo(74.5) == 0);
+        LOG.info("Example 4 end");
     }
 
 }
