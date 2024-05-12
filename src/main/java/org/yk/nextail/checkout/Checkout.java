@@ -6,7 +6,6 @@ import org.yk.nextail.cart.CartItem;
 import org.yk.nextail.price.PricingRule;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,7 +23,9 @@ public class Checkout {
 
     public void scan(CartItem cartItem) {
         // FIXME: consider concurrency
+        LOG.info("Scanning new cart item [" + cartItem.getCode() + "]");
         cartItems.add(cartItem);
+        evaluateAndApplyPricingRules();
     }
 
     public List<CartItem> getCartItems() {
@@ -32,63 +33,85 @@ public class Checkout {
     }
 
     public Double getCartTotal() {
-        if (evaluatePricingRuleConditions()) {
-            // FIXME: Apply pricing rules actions
-            applyPricingRuleActions();
-        }
-        return cartItems.stream().mapToDouble(ci -> ci.getPrice()).sum();
+        return cartItems.stream().mapToDouble(ci -> ci.getPrice() - ((ci.getDiscount() != null) ? ci.getDiscount() : 0.00)).sum();
     }
 
     /**
      * Evaluates pricing rule conditions against current cart items.
-     * NOTE: currently there's a limitation for composed conditions, which are being evaluated using AND operator
+     * NOTE: currently there's a limitation for composed conditions,
+     * which are always being evaluated using AND operator
      *
      * @return
      */
-    private boolean evaluatePricingRuleConditions() {
-        Arrays.stream(PricingRule.PriceRuleCondition.PriceRuleConditionType.values()).forEach(prc -> {
-//            LOG.info("PRC: " + prc);
-        });
+    private void evaluateAndApplyPricingRules() {
+        List<CartItem> filteredCartItems = cartItems;
 
+        // 1. Firstly, evaluate PRODUCT_CODE condition when present in order to trim down the stream
         Optional<PricingRule.PriceRuleCondition<?>> productCodeConditionOptional = pricingRules.stream()
                 .flatMap(pr -> pr.getConditions().stream())
                 .filter(c -> c.getConditionType().equals(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_CODE))
                 .findFirst();
-
-        List<CartItem> filteredCartItems = cartItems;
-
-        // 1. Apply first PRODUCT_CODE condition when present
         if (productCodeConditionOptional.isPresent()) {
-            LOG.info("Found PRODUCT_CODE condition, evaluating...");
-            PricingRule.PriceRuleCondition<?> productCodeCondition = productCodeConditionOptional.get();
-            LOG.info(productCodeCondition.toString());
+            LOG.info("Evaluating PRODUCT_CODE condition...");
+            PricingRule.PriceRuleCondition<String> productCodeCondition = (PricingRule.PriceRuleCondition<String>) productCodeConditionOptional.get();
 
-            // FIXME: Honor condition operator
+
             filteredCartItems = cartItems.stream()
-                    .filter(ci -> productCodeCondition.getConditionValue().equals(ci.getCode()))
+                    .filter(ci -> productCodeCondition.evalCondition(ci.getCode()))
                     .collect(Collectors.toList());
-
+            if (!filteredCartItems.isEmpty()) {
+                LOG.info("Found " + filteredCartItems.size() + " cart item occurrence/s for PRODUCT_CODE condition ["
+                        + productCodeCondition.getConditionOperator().name()
+                        + " " + productCodeCondition.getConditionValue()
+                        + "]");
+            }
         }
 
+        // 2. Secondly, evaluate PRODUCT_QUANTITY_IN_CHECKOUT condition when present,
+        // using all cart items OR the ones filtered by the previous condition
         Optional<PricingRule.PriceRuleCondition<?>> quantityInCheckoutConditionOptional = pricingRules.stream()
                 .flatMap(pr -> pr.getConditions().stream())
                 .filter(c -> c.getConditionType().equals(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_QUANTITY_IN_CHECKOUT))
                 .findFirst();
-        if (quantityInCheckoutConditionOptional.isPresent()) {
-            LOG.info("Found PRODUCT_QUANTITY_IN_CHECKOUT condition, evaluating...");
-            PricingRule.PriceRuleCondition<?> quantityInCheckoutCondition = quantityInCheckoutConditionOptional.get();
-            if ((Integer) quantityInCheckoutCondition.getConditionValue() == filteredCartItems.size()) {
-                return true;
+        if (!filteredCartItems.isEmpty() && quantityInCheckoutConditionOptional.isPresent()) {
+            LOG.info("Evaluating PRODUCT_QUANTITY_IN_CHECKOUT condition...");
+            PricingRule.PriceRuleCondition<Integer> quantityInCheckoutCondition = (PricingRule.PriceRuleCondition<Integer>) quantityInCheckoutConditionOptional.get();
+
+            // FIXME: Honor condition operator
+            if (quantityInCheckoutCondition.evalCondition(filteredCartItems.size())) {
+                LOG.info("Found " + filteredCartItems.size() + " cart item occurrence/s for PRODUCT_QUANTITY_IN_CHECKOUT condition ["
+                        + quantityInCheckoutCondition.getConditionOperator().name()
+                        + " " + quantityInCheckoutCondition.getConditionValue()
+                        + "]");
+            } else {
+                filteredCartItems = new ArrayList<>();
             }
-            LOG.info(quantityInCheckoutCondition.toString());
         }
 
-//        pricingRules.stream().filter(pr -> pr.getConditions().stream().filter()
-        return false;
+        if (!filteredCartItems.isEmpty()) {
+            applyPricingRuleActions(filteredCartItems);
+        }
     }
 
-    private void applyPricingRuleActions() {
-
+    private void applyPricingRuleActions(List<CartItem> cartItems) {
+        pricingRules.stream().flatMap(pr -> pr.getActions().stream()).forEach(pra -> {
+            switch (pra.getPriceRuleActionType()) {
+                case PRODUCT_FIXED_PRICE -> {
+                    LOG.info("Applying PRODUCT_FIXED_PRICE action rule [" + pra.getValue() + "]");
+                    if (pra.getValue() instanceof Number) {
+                        cartItems.forEach(c -> c.setDiscount(c.getPrice().doubleValue() - (pra.getValue()).doubleValue()));
+                    } else {
+                        // TODO: Handle error
+                    }
+                }
+                case PRODUCT_DISCOUNT_PERCENT -> {
+                    LOG.info("Applying PRODUCT_DISCOUNT_PERCENT action rule [" + pra.getValue() + "]");
+                    // TODO: Not yet implemented
+                }
+                default -> {
+                    // TODO: Handle error
+                }
+            }
+        });
     }
-
 }
