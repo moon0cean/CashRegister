@@ -6,6 +6,7 @@ public class CartItem {
     private final String name;
     private final Double price;
     private final String currency;
+    private Double discount;
 
     public CartItem(String code, String name, Double price, String currency) {
         this.code = code;
@@ -28,5 +29,13 @@ public class CartItem {
 
     public String getCurrency() {
         return currency;
+    }
+
+    public Double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Double discount) {
+        this.discount = discount;
     }
 }
