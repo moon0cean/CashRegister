@@ -12,28 +12,42 @@ import org.yk.nextail.price.PricingRule;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.yk.nextail.CheckoutTest.PredefinedCartItems.PANTS;
+import static org.yk.nextail.CheckoutTest.PredefinedCartItems.TSHIRT;
+import static org.yk.nextail.CheckoutTest.PredefinedCartItems.VOUCHER;
+
 public class CheckoutTest {
     private static final Logger LOG = LoggerFactory.getLogger(CheckoutTest.class);
-    private static List<CartItem> cartItemList = new ArrayList<>();
-    private static List<PricingRule> priceRulesList = new ArrayList<>();
-    private static List<List<CartItem>> checkoutItemList = new ArrayList<>();
+    private final static List<PricingRule> priceRulesList = new ArrayList<>();
+    private final static List<List<CartItem>> checkoutItemList = new ArrayList<>();
+    protected enum PredefinedCartItems {
+        // TODO: Consider using a Factory here
+        VOUCHER,
+        TSHIRT,
+        PANTS;
+
+        public CartItem getCartItem() {
+            if (this.equals(VOUCHER)) {
+                return new CartItem("VOUCHER", "Gift Card", 5.00, "€");
+            } else if (this.equals(TSHIRT)) {
+                return new CartItem("TSHIRT", "Summer T-Shirt", 20.00, "€");
+            } else if (this.equals(PANTS)) {
+                return new CartItem("PANTS", "Summer Pants", 7.50, "€");
+            }
+            return null;
+        }
+    }
 
     @BeforeClass
     public static void init() {
         LOG.info("Initializing Nextail Cash-Register Checkout test data");
-        createCartItems();
         createPriceRules();
         populateCheckout();
     }
 
-    private static void createCartItems() {
-        cartItemList.add(new CartItem("VOUCHER", "Gift Card", 5.00, "€"));
-        cartItemList.add(new CartItem("TSHIRT", "Summer T-Shirt", 20.00, "€"));
-        cartItemList.add(new CartItem("PANTS", "Summer Pants", 7.50, "€"));
-    }
 
     private static void createPriceRules() {
-        // 2-for-1 pricing rule for VOUCHER
+        // Unit price 19€ for TSHIRT items when cart has >= 3 cart items of that type
         List<PricingRule.PriceRuleCondition<?>> conditions = List.of(
                 new PricingRule.PriceRuleCondition.Builder<String>()
                         .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.EQUALS)
@@ -54,7 +68,7 @@ public class CheckoutTest {
         );
         priceRulesList.add(new PricingRule(conditions, actions));
 
-        // Unit price 19€ for TSHIRT items when cart has >= 3 cart items of that type
+        // 2-for-1 pricing rule for VOUCHER
         conditions = List.of(
                 new PricingRule.PriceRuleCondition.Builder<String>()
                         .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.EQUALS)
@@ -72,12 +86,12 @@ public class CheckoutTest {
     }
 
     private static void populateCheckout() {
-        checkoutItemList.add(List.of(cartItemList.get(0), cartItemList.get(1), cartItemList.get(2))); // Example 1
-        checkoutItemList.add(List.of(cartItemList.get(0), cartItemList.get(1), cartItemList.get(0))); // Example 2
-        checkoutItemList.add(List.of(cartItemList.get(1), cartItemList.get(1), cartItemList.get(1),
-                cartItemList.get(0), cartItemList.get(1))); // Example 3
-        checkoutItemList.add(List.of(cartItemList.get(0), cartItemList.get(1), cartItemList.get(0),
-                cartItemList.get(0), cartItemList.get(2), cartItemList.get(1), cartItemList.get(1))); // Example 4
+        checkoutItemList.add(List.of(VOUCHER.getCartItem(), TSHIRT.getCartItem(), PANTS.getCartItem())); // Example 1
+        checkoutItemList.add(List.of(VOUCHER.getCartItem(), TSHIRT.getCartItem(), VOUCHER.getCartItem())); // Example 2
+        checkoutItemList.add(List.of(TSHIRT.getCartItem(), TSHIRT.getCartItem(), TSHIRT.getCartItem(),
+                VOUCHER.getCartItem(), TSHIRT.getCartItem())); // Example 3
+        checkoutItemList.add(List.of(VOUCHER.getCartItem(), TSHIRT.getCartItem(), VOUCHER.getCartItem(),
+                VOUCHER.getCartItem(), PANTS.getCartItem(), TSHIRT.getCartItem(), TSHIRT.getCartItem())); // Example 4
     }
 
     @Test
