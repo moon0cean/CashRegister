@@ -1,11 +1,17 @@
 package org.yk.nextail.price;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
  * Class responsible to define conditions and actions for a given pricing rule.
  */
 public class PricingRule {
+    private static final Logger LOG = LoggerFactory.getLogger(PricingRule.class);
     private final List<PriceRuleCondition<?>> conditions;
     private final List<PriceRuleAction<?>> actions;
 
@@ -26,6 +32,7 @@ public class PricingRule {
     public List<PriceRuleAction<?>> getActions() {
         return actions;
     }
+
 
     /**
      * Defines a rule condition by constructing through a builder the right and left value and the conditional operator
@@ -67,6 +74,112 @@ public class PricingRule {
             return conditionValue;
         }
 
+        public boolean evalCondition(V value) {
+            switch (getConditionOperator()) {
+                case EQUALS -> {
+                    if (value instanceof Number) {
+                        return conditionValue == value;
+                    }
+                    return conditionValue.equals(value);
+                }
+                case GREATER_THAN_EQUALS -> {
+                    // FIXME: Ugly as hell
+                    if (conditionValue instanceof Integer) {
+                        return (Integer) value >= (Integer) conditionValue;
+                    } else if (conditionValue instanceof Double) {
+                        return (Double) value >= (Double) conditionValue;
+                    } else if (conditionValue instanceof Float) {
+                        return (Float) value >= (Float) conditionValue;
+                    } else if (conditionValue instanceof Long) {
+                        return (Long) value >= (Long) conditionValue;
+                    } else if (conditionValue instanceof Short) {
+                        return (Short) value >= (Short) conditionValue;
+                    } else if (conditionValue instanceof BigDecimal) {
+                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) >= 0;
+                    } else if (conditionValue instanceof BigInteger) {
+                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) >= 0;
+                    }
+                    LOG.error("Invalid greater_than_equals operator for value of type " + value.getClass().getName()
+                            + " and condition value of type " + value.getClass().getName());
+                    // TODO: Returning false for now, but consider to throw an exception here
+                    return false;
+                }
+                case GREATER_THAN -> {
+                    // FIXME: Ugly as hell
+                    if (conditionValue instanceof Integer) {
+                        return (Integer) value > (Integer) conditionValue;
+                    } else if (conditionValue instanceof Double) {
+                        return (Double) value > (Double) conditionValue;
+                    } else if (conditionValue instanceof Float) {
+                        return (Float) value > (Float) conditionValue;
+                    } else if (conditionValue instanceof Long) {
+                        return (Long) value > (Long) conditionValue;
+                    } else if (conditionValue instanceof Short) {
+                        return (Short) value > (Short) conditionValue;
+                    } else if (conditionValue instanceof BigDecimal) {
+                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) > 0;
+                    } else if (conditionValue instanceof BigInteger) {
+                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) > 0;
+                    }
+                    LOG.error("Invalid greater_than operator for value of type " + value.getClass().getName()
+                            + " and condition value of type " + value.getClass().getName());
+                    // TODO: Returning false for now, but consider to throw an exception here
+                    return false;
+                }
+                case LESS_THAN_EQUALS -> {
+                    // FIXME: Ugly as hell
+                    if (conditionValue instanceof Integer) {
+                        return (Integer) value <= (Integer) conditionValue;
+                    } else if (conditionValue instanceof Double) {
+                        return (Double) value <= (Double) conditionValue;
+                    } else if (conditionValue instanceof Float) {
+                        return (Float) value <= (Float) conditionValue;
+                    } else if (conditionValue instanceof Long) {
+                        return (Long) value <= (Long) conditionValue;
+                    } else if (conditionValue instanceof Short) {
+                        return (Short) value <= (Short) conditionValue;
+                    } else if (conditionValue instanceof BigDecimal) {
+                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) <= 0;
+                    } else if (conditionValue instanceof BigInteger) {
+                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) <= 0;
+                    }
+                    LOG.error("Invalid less_than_equals operator for value of type " + value.getClass().getName()
+                            + " and condition value of type " + value.getClass().getName());
+                    // TODO: Returning false for now, but consider to throw an exception here
+                    return false;
+                }
+                case LESS_THAN -> {
+                    // FIXME: Ugly as hell
+                    if (conditionValue instanceof Integer) {
+                        return (Integer) value < (Integer) conditionValue;
+                    } else if (conditionValue instanceof Double) {
+                        return (Double) value < (Double) conditionValue;
+                    } else if (conditionValue instanceof Float) {
+                        return (Float) value < (Float) conditionValue;
+                    } else if (conditionValue instanceof Long) {
+                        return (Long) value < (Long) conditionValue;
+                    } else if (conditionValue instanceof Short) {
+                        return (Short) value < (Short) conditionValue;
+                    } else if (conditionValue instanceof BigDecimal) {
+                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) < 0;
+                    } else if (conditionValue instanceof BigInteger) {
+                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) < 0;
+                    }
+                    LOG.error("Invalid less_than operator for value of type " + value.getClass().getName()
+                            + " and condition value of type " + value.getClass().getName());
+                    // TODO: Returning false for now, but consider to throw an exception here
+                    return false;
+                }
+                case NOT_EQUALS -> {
+                    if (value instanceof Number) {
+                        return conditionValue != value;
+                    }
+                    return !conditionValue.equals(value);
+                }
+            }
+            return false;
+        }
+
         public static class Builder<V> {
             private PriceRuleCondition priceRuleCondition = new PriceRuleCondition<V>();
 
@@ -102,12 +215,12 @@ public class PricingRule {
     }
 
     /**
-     * Defines a rule action by constructing through a builder to apply to checkout based on
-     * the action type passed.
+     * Defines a rule action by constructing through a builder to apply to the checkout process,
+     * based on the action type passed.
      *
      * @param <V>
      */
-    public static class PriceRuleAction<V> {
+    public static class PriceRuleAction<V extends Number> {
         private PriceRuleActionType priceRuleActionType;
         private V value;
 
@@ -116,10 +229,18 @@ public class PricingRule {
             PRODUCT_FIXED_PRICE
         }
 
+        public PriceRuleActionType getPriceRuleActionType() {
+            return priceRuleActionType;
+        }
+
+        public V getValue() {
+            return value;
+        }
+
         private PriceRuleAction() {
         }
 
-        public static class Builder<V> {
+        public static class Builder<V extends Number> {
             PriceRuleAction priceRuleAction = new PriceRuleAction();
 
             public PriceRuleAction.Builder addActionType(PriceRuleActionType actionType) {
