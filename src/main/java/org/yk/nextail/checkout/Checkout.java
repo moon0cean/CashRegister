@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Class representing the current state of the checkout process,
@@ -20,7 +19,7 @@ public class Checkout {
     private final List<CartItem> cartItems;
     private final List<PricingRule> pricingRules;
 
-    // TODO: Likely to be redesigned in order to not have to pass pricing rules at this stage
+    // FIXME: Likely to be redesigned in order to not have to pass pricing rules at this stage
     public Checkout(List<PricingRule> pricingRules) {
         this.cartItems = new ArrayList<>();
         this.pricingRules = pricingRules;
@@ -33,7 +32,7 @@ public class Checkout {
      * @param cartItem The cart item to be added into Checkout
      */
     public void scan(CartItem cartItem) {
-        // FIXME: consider concurrency
+        // TODO: consider concurrency
         LOG.info("Scanning new cart item [" + cartItem.getCode() + "]");
         cartItems.add(cartItem);
         evaluateAndApplyPricingRules();
@@ -58,12 +57,12 @@ public class Checkout {
         pricingRules.stream().forEach(pr -> {
             List<CartItem> filteredCartItems = cartItems;
 
-            // 1. Firstly, evaluate PRODUCT_CODE condition when present in order to trim down the stream
+            // 1. Firstly, evaluate CART_ITEM_CODE condition when present in order to trim down the stream
             Optional<PricingRule.PriceRuleCondition<?>> productCodeConditionOptional =
                     pr.getConditions().stream().filter(c -> c.getConditionType().equals(PricingRule.PriceRuleCondition.PriceRuleConditionType.CART_ITEM_CODE))
                             .findFirst();
             if (productCodeConditionOptional.isPresent()) {
-                LOG.info("Evaluating PRODUCT_CODE condition...");
+                LOG.info("Evaluating CART_ITEM_CODE condition...");
                 PricingRule.PriceRuleCondition<String> productCodeCondition = (PricingRule.PriceRuleCondition<String>) productCodeConditionOptional.get();
 
 
@@ -71,27 +70,53 @@ public class Checkout {
                         .filter(ci -> productCodeCondition.evalCondition(ci.getCode()))
                         .collect(Collectors.toList());
                 if (!filteredCartItems.isEmpty()) {
-                    LOG.info("Found " + filteredCartItems.size() + " cart item occurrence/s for PRODUCT_CODE condition ["
+                    LOG.info("Found " + filteredCartItems.size() + " cart item occurrence/s for CART_ITEM_CODE condition ["
                             + productCodeCondition.getConditionOperator().name()
                             + " " + productCodeCondition.getConditionValue()
                             + "]");
                 }
             }
 
-            // 2. Secondly, evaluate PRODUCT_QUANTITY_IN_CHECKOUT condition when present,
-            // using all cart items OR the ones filtered by the previous condition
-            Optional<PricingRule.PriceRuleCondition<?>> quantityInCheckoutConditionOptional =
-                    pr.getConditions().stream().filter(c -> c.getConditionType().equals(PricingRule.PriceRuleCondition.PriceRuleConditionType.CART_ITEM_QUANTITY_TOTAL))
+            // 2. Secondly, evaluate CART_ITEM_QUANTITY_TOTAL condition when present,
+            // using all cart items OR the ones filtered by previous conditions
+            Optional<PricingRule.PriceRuleCondition<?>> cartItemQuantityTotalConditionOptional =
+                    pr.getConditions().stream().filter(c ->
+                                    c.getConditionType().equals(PricingRule.PriceRuleCondition.PriceRuleConditionType.CART_ITEM_QUANTITY_TOTAL))
                             .findFirst();
-            if (!filteredCartItems.isEmpty() && quantityInCheckoutConditionOptional.isPresent()) {
-                LOG.info("Evaluating PRODUCT_QUANTITY_IN_CHECKOUT condition...");
-                PricingRule.PriceRuleCondition<Integer> quantityInCheckoutCondition = (PricingRule.PriceRuleCondition<Integer>) quantityInCheckoutConditionOptional.get();
+            if (!filteredCartItems.isEmpty() && cartItemQuantityTotalConditionOptional.isPresent()) {
+                LOG.info("Evaluating CART_ITEM_QUANTITY_TOTAL condition...");
+                PricingRule.PriceRuleCondition<Integer> cartItemQuantityTotalCondition =
+                        (PricingRule.PriceRuleCondition<Integer>) cartItemQuantityTotalConditionOptional.get();
 
-                if (quantityInCheckoutCondition.evalCondition(filteredCartItems.size())) {
-                    LOG.info("Found " + filteredCartItems.size() + " cart item occurrence/s for PRODUCT_QUANTITY_IN_CHECKOUT condition ["
-                            + quantityInCheckoutCondition.getConditionOperator().name()
-                            + " " + quantityInCheckoutCondition.getConditionValue()
+                if (cartItemQuantityTotalCondition.evalCondition(filteredCartItems.size())) {
+                    LOG.info("Found " + filteredCartItems.size() + " cart item occurrence/s for CART_ITEM_QUANTITY_TOTAL condition ["
+                            + cartItemQuantityTotalCondition.getConditionOperator().name()
+                            + " " + cartItemQuantityTotalCondition.getConditionValue()
                             + "]");
+                } else {
+                    filteredCartItems = new ArrayList<>();
+                }
+            }
+
+            // 3. Thirdly, evaluate CART_ITEM_X_QUANTITY condition when present,
+            // using all cart items OR the ones filtered by previous conditions
+            Optional<PricingRule.PriceRuleCondition<?>> cartItemXQuantityConditionOptional =
+                    pr.getConditions().stream().filter(c ->
+                                    c.getConditionType().equals(PricingRule.PriceRuleCondition.PriceRuleConditionType.CART_ITEM_X_QUANTITY))
+                            .findFirst();
+            if (!filteredCartItems.isEmpty() && cartItemXQuantityConditionOptional.isPresent()) {
+                LOG.info("Evaluating CART_ITEM_X_QUANTITY condition...");
+                PricingRule.PriceRuleCondition<Integer> cartItemXQuantityCondition =
+                        (PricingRule.PriceRuleCondition<Integer>) cartItemXQuantityConditionOptional.get();
+
+                Integer cartItemXQuantity = Math.round(filteredCartItems.size() / cartItemXQuantityCondition.getConditionValue());
+                if (cartItemXQuantity > 0) {
+                    LOG.info("Found " + cartItemXQuantity
+                            + " cart item occurrence/s for CART_ITEM_X_QUANTITY condition ["
+                            + cartItemXQuantityCondition.getConditionOperator().name()
+                            + " " + cartItemXQuantityCondition.getConditionValue()
+                            + "]");
+                    filteredCartItems = filteredCartItems.subList(0, cartItemXQuantity);
                 } else {
                     filteredCartItems = new ArrayList<>();
                 }
@@ -125,21 +150,17 @@ public class Checkout {
                         // TODO: Handle error
                     }
                 }
-                case CART_ITEM_X_QUANTITY_DISCOUNT_PERCENT -> {
-                    LOG.info("Applying CART_ITEM_X_QUANTITY_DISCOUNT_PERCENT action rule for quantity = " + pra.getQuantity()
-                            + " and discount percent = " + pra.getValue() + "%");
-                    if (pra.getValue() instanceof Number && (pra.getQuantity() != null && pra.getQuantity() > 0)) {
-                        IntStream.range(0, cartItems.size() - 1).forEach(i -> {
-                            if (i % pra.getQuantity() == 0) {
-                                CartItem ci = cartItems.get(i);
-                                Double discount = (ci.getPrice().doubleValue() * pra.getQuantity()) * (pra.getValue().doubleValue() / 100);
-                                if (discount > ci.getPrice()) { // Never apply a discount greater than the price of the item
-                                    discount = ci.getPrice();
-                                }
-                                LOG.info("Applied CART_ITEM_X_QUANTITY_DISCOUNT_PERCENT action rule discount = " + discount
-                                        + " for cart item = " + ci.getCode());
-                                ci.setDiscount(discount);
+                case CART_ITEM_DISCOUNT_PERCENT -> {
+                    LOG.info("Applying CART_ITEM_DISCOUNT_PERCENT action rule using discount percentage = " + pra.getValue() + "%");
+                    if (pra.getValue() instanceof Number) {
+                        cartItems.forEach(ci -> {
+                            Double discount = (ci.getPrice().doubleValue()) * (pra.getValue().doubleValue() / 100);
+                            if (discount > ci.getPrice()) { // Never apply a discount greater than the price of the item
+                                discount = ci.getPrice();
                             }
+                            LOG.info("Applied CART_ITEM_DISCOUNT_PERCENT action rule discount = " + discount
+                                    + " for cart item = " + ci.getCode());
+                            ci.setDiscount(discount);
                         });
                     } else {
                         // TODO: Handle error
