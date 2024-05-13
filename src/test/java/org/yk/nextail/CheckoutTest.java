@@ -51,18 +51,18 @@ public class CheckoutTest {
         List<PricingRule.PriceRuleCondition<?>> conditions = List.of(
                 new PricingRule.PriceRuleCondition.Builder<String>()
                         .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.EQUALS)
-                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_CODE)
+                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.CART_ITEM_CODE)
                         .addConditionValue("TSHIRT")
                         .build(),
                 new PricingRule.PriceRuleCondition.Builder<Integer>()
                         .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.GREATER_THAN_EQUALS)
-                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_QUANTITY_IN_CHECKOUT)
+                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.CART_ITEM_QUANTITY_TOTAL)
                         .addConditionValue(3)
                         .build()
         );
         List<PricingRule.PriceRuleAction<?>> actions = List.of(
                 new PricingRule.PriceRuleAction.Builder()
-                        .addActionType(PricingRule.PriceRuleAction.PriceRuleActionType.PRODUCT_FIXED_PRICE)
+                        .addActionType(PricingRule.PriceRuleAction.PriceRuleActionType.CART_ITEM_FIXED_PRICE)
                         .addActionValue(19.00)
                         .build()
         );
@@ -72,13 +72,14 @@ public class CheckoutTest {
         conditions = List.of(
                 new PricingRule.PriceRuleCondition.Builder<String>()
                         .addConditionOperator(PricingRule.PriceRuleCondition.PriceRuleConditionOperator.EQUALS)
-                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.PRODUCT_CODE)
+                        .addConditionType(PricingRule.PriceRuleCondition.PriceRuleConditionType.CART_ITEM_CODE)
                         .addConditionValue("VOUCHER")
                         .build()
         );
         actions = List.of(
                 new PricingRule.PriceRuleAction.Builder()
-                        .addActionType(PricingRule.PriceRuleAction.PriceRuleActionType.PRODUCT_DISCOUNT_PERCENT)
+                        .addActionType(PricingRule.PriceRuleAction.PriceRuleActionType.CART_ITEM_X_QUANTITY_DISCOUNT_PERCENT)
+                        .addActionQuantity(2)
                         .addActionValue(50)
                         .build()
         );
