@@ -11,6 +11,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Class representing the current state of the checkout process,
+ * handling cart items operations (currently only scan)
+ */
 public class Checkout {
     private static final Logger LOG = LoggerFactory.getLogger(Checkout.class);
     private final List<CartItem> cartItems;
@@ -23,7 +27,8 @@ public class Checkout {
     }
 
     /**
-     * Scans a new cart item and adds it to the checkout process, then evaluates and applies pricing rules
+     * Scans a new cart item and adds it to the checkout process,
+     * then evaluates and applies pricing rules
      *
      * @param cartItem The cart item to be added into Checkout
      */
