@@ -46,8 +46,8 @@ public class PricingRule {
         private V conditionValue;
 
         public enum PriceRuleConditionType {
-            PRODUCT_QUANTITY_IN_CHECKOUT,
-            PRODUCT_CODE
+            CART_ITEM_QUANTITY_TOTAL,
+            CART_ITEM_CODE
         }
 
         public enum PriceRuleConditionOperator {
@@ -75,6 +75,10 @@ public class PricingRule {
         }
 
         public boolean evalCondition(V value) {
+            if (!value.getClass().isAssignableFrom(conditionValue.getClass())) {
+                // FIXME: throw an exception here
+                return false;
+            }
             switch (getConditionOperator()) {
                 case EQUALS -> {
                     if (value instanceof Number) {
@@ -222,11 +226,13 @@ public class PricingRule {
      */
     public static class PriceRuleAction<V extends Number> {
         private PriceRuleActionType priceRuleActionType;
+        // FIXME: replace by float type
+        private Integer quantity;
         private V value;
 
         public enum PriceRuleActionType {
-            PRODUCT_DISCOUNT_PERCENT,
-            PRODUCT_FIXED_PRICE
+            CART_ITEM_X_QUANTITY_DISCOUNT_PERCENT,
+            CART_ITEM_FIXED_PRICE
         }
 
         public PriceRuleActionType getPriceRuleActionType() {
@@ -237,6 +243,10 @@ public class PricingRule {
             return value;
         }
 
+        public Integer getQuantity() {
+            return quantity;
+        }
+
         private PriceRuleAction() {
         }
 
@@ -245,6 +255,11 @@ public class PricingRule {
 
             public PriceRuleAction.Builder addActionType(PriceRuleActionType actionType) {
                 priceRuleAction.priceRuleActionType = actionType;
+                return this;
+            }
+
+            public PriceRuleAction.Builder addActionQuantity(Integer quantity) {
+                priceRuleAction.quantity = quantity;
                 return this;
             }
 
