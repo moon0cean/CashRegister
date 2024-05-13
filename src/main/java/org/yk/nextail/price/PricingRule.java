@@ -3,8 +3,6 @@ package org.yk.nextail.price;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -47,6 +45,7 @@ public class PricingRule {
 
         public enum PriceRuleConditionType {
             CART_ITEM_QUANTITY_TOTAL,
+            CART_ITEM_X_QUANTITY,
             CART_ITEM_CODE
         }
 
@@ -73,35 +72,28 @@ public class PricingRule {
         public V getConditionValue() {
             return conditionValue;
         }
-
         public boolean evalCondition(V value) {
             if (!value.getClass().isAssignableFrom(conditionValue.getClass())) {
                 // FIXME: throw an exception here
+                LOG.error("Value class " + value.getClass().getName() + " can't be assigned from " + conditionValue.getClass().getName());
                 return false;
+            } else {
+                LOG.debug("Value class " + value.getClass().getName() + " can be assigned from " + conditionValue.getClass().getName());
+            }
+            boolean canBeCompared = false;
+            if (value instanceof Comparable && conditionValue instanceof Comparable) {
+                canBeCompared = true;
             }
             switch (getConditionOperator()) {
                 case EQUALS -> {
-                    if (value instanceof Number) {
-                        return conditionValue == value;
+                    if (canBeCompared) {
+                        return ((Comparable<V>) value).compareTo(conditionValue) == 0;
                     }
                     return conditionValue.equals(value);
                 }
                 case GREATER_THAN_EQUALS -> {
-                    // FIXME: Ugly as hell
-                    if (conditionValue instanceof Integer) {
-                        return (Integer) value >= (Integer) conditionValue;
-                    } else if (conditionValue instanceof Double) {
-                        return (Double) value >= (Double) conditionValue;
-                    } else if (conditionValue instanceof Float) {
-                        return (Float) value >= (Float) conditionValue;
-                    } else if (conditionValue instanceof Long) {
-                        return (Long) value >= (Long) conditionValue;
-                    } else if (conditionValue instanceof Short) {
-                        return (Short) value >= (Short) conditionValue;
-                    } else if (conditionValue instanceof BigDecimal) {
-                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) >= 0;
-                    } else if (conditionValue instanceof BigInteger) {
-                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) >= 0;
+                    if (canBeCompared) {
+                        return ((Comparable<V>) value).compareTo(conditionValue) >= 0;
                     }
                     LOG.error("Invalid greater_than_equals operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
@@ -109,21 +101,8 @@ public class PricingRule {
                     return false;
                 }
                 case GREATER_THAN -> {
-                    // FIXME: Ugly as hell
-                    if (conditionValue instanceof Integer) {
-                        return (Integer) value > (Integer) conditionValue;
-                    } else if (conditionValue instanceof Double) {
-                        return (Double) value > (Double) conditionValue;
-                    } else if (conditionValue instanceof Float) {
-                        return (Float) value > (Float) conditionValue;
-                    } else if (conditionValue instanceof Long) {
-                        return (Long) value > (Long) conditionValue;
-                    } else if (conditionValue instanceof Short) {
-                        return (Short) value > (Short) conditionValue;
-                    } else if (conditionValue instanceof BigDecimal) {
-                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) > 0;
-                    } else if (conditionValue instanceof BigInteger) {
-                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) > 0;
+                    if (canBeCompared) {
+                        return ((Comparable<V>) value).compareTo(conditionValue) > 0;
                     }
                     LOG.error("Invalid greater_than operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
@@ -131,21 +110,8 @@ public class PricingRule {
                     return false;
                 }
                 case LESS_THAN_EQUALS -> {
-                    // FIXME: Ugly as hell
-                    if (conditionValue instanceof Integer) {
-                        return (Integer) value <= (Integer) conditionValue;
-                    } else if (conditionValue instanceof Double) {
-                        return (Double) value <= (Double) conditionValue;
-                    } else if (conditionValue instanceof Float) {
-                        return (Float) value <= (Float) conditionValue;
-                    } else if (conditionValue instanceof Long) {
-                        return (Long) value <= (Long) conditionValue;
-                    } else if (conditionValue instanceof Short) {
-                        return (Short) value <= (Short) conditionValue;
-                    } else if (conditionValue instanceof BigDecimal) {
-                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) <= 0;
-                    } else if (conditionValue instanceof BigInteger) {
-                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) <= 0;
+                    if (canBeCompared) {
+                        return ((Comparable<V>) value).compareTo(conditionValue) <= 0;
                     }
                     LOG.error("Invalid less_than_equals operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
@@ -153,21 +119,8 @@ public class PricingRule {
                     return false;
                 }
                 case LESS_THAN -> {
-                    // FIXME: Ugly as hell
-                    if (conditionValue instanceof Integer) {
-                        return (Integer) value < (Integer) conditionValue;
-                    } else if (conditionValue instanceof Double) {
-                        return (Double) value < (Double) conditionValue;
-                    } else if (conditionValue instanceof Float) {
-                        return (Float) value < (Float) conditionValue;
-                    } else if (conditionValue instanceof Long) {
-                        return (Long) value < (Long) conditionValue;
-                    } else if (conditionValue instanceof Short) {
-                        return (Short) value < (Short) conditionValue;
-                    } else if (conditionValue instanceof BigDecimal) {
-                        return ((BigDecimal) conditionValue).compareTo((BigDecimal) value) < 0;
-                    } else if (conditionValue instanceof BigInteger) {
-                        return ((BigInteger) conditionValue).compareTo((BigInteger) value) < 0;
+                    if (canBeCompared) {
+                        return ((Comparable<V>) value).compareTo(conditionValue) < 0;
                     }
                     LOG.error("Invalid less_than operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
@@ -175,8 +128,8 @@ public class PricingRule {
                     return false;
                 }
                 case NOT_EQUALS -> {
-                    if (value instanceof Number) {
-                        return conditionValue != value;
+                    if (canBeCompared) {
+                        return ((Comparable<V>) value).compareTo(conditionValue) != 0;
                     }
                     return !conditionValue.equals(value);
                 }
@@ -226,12 +179,10 @@ public class PricingRule {
      */
     public static class PriceRuleAction<V extends Number> {
         private PriceRuleActionType priceRuleActionType;
-        // FIXME: replace by float type
-        private Integer quantity;
         private V value;
 
         public enum PriceRuleActionType {
-            CART_ITEM_X_QUANTITY_DISCOUNT_PERCENT,
+            CART_ITEM_DISCOUNT_PERCENT,
             CART_ITEM_FIXED_PRICE
         }
 
@@ -243,10 +194,6 @@ public class PricingRule {
             return value;
         }
 
-        public Integer getQuantity() {
-            return quantity;
-        }
-
         private PriceRuleAction() {
         }
 
@@ -255,11 +202,6 @@ public class PricingRule {
 
             public PriceRuleAction.Builder addActionType(PriceRuleActionType actionType) {
                 priceRuleAction.priceRuleActionType = actionType;
-                return this;
-            }
-
-            public PriceRuleAction.Builder addActionQuantity(Integer quantity) {
-                priceRuleAction.quantity = quantity;
                 return this;
             }
 
