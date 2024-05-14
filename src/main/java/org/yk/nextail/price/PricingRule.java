@@ -2,6 +2,7 @@ package org.yk.nextail.price;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yk.nextail.NextailException;
 
 import java.util.List;
 
@@ -74,9 +75,8 @@ public class PricingRule {
         }
         public boolean evalCondition(V value) {
             if (!value.getClass().isAssignableFrom(conditionValue.getClass())) {
-                // FIXME: throw an exception here
-                LOG.error("Eval condition: Value class " + value.getClass().getName() + " can't be assigned from condition class " + conditionValue.getClass().getName());
-                return false;
+                throw new NextailException("Eval condition: Value class " + value.getClass().getName()
+                        + " can't be assigned from condition class " + conditionValue.getClass().getName());
             } else {
                 LOG.debug("Eval condition: value class " + value.getClass().getName() + " can be assigned from condition class " + conditionValue.getClass().getName());
             }
@@ -95,37 +95,29 @@ public class PricingRule {
                     if (canBeCompared) {
                         return ((Comparable<V>) value).compareTo(conditionValue) >= 0;
                     }
-                    LOG.error("Invalid greater_than_equals operator for value of type " + value.getClass().getName()
+                    throw new NextailException("Invalid greater_than_equals operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
-                    // TODO: Returning false for now, but consider to throw an exception here
-                    return false;
                 }
                 case GREATER_THAN -> {
                     if (canBeCompared) {
                         return ((Comparable<V>) value).compareTo(conditionValue) > 0;
                     }
-                    LOG.error("Invalid greater_than operator for value of type " + value.getClass().getName()
+                    throw new NextailException("Invalid greater_than operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
-                    // TODO: Returning false for now, but consider to throw an exception here
-                    return false;
                 }
                 case LESS_THAN_EQUALS -> {
                     if (canBeCompared) {
                         return ((Comparable<V>) value).compareTo(conditionValue) <= 0;
                     }
-                    LOG.error("Invalid less_than_equals operator for value of type " + value.getClass().getName()
+                    throw new NextailException("Invalid less_than_equals operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
-                    // TODO: Returning false for now, but consider to throw an exception here
-                    return false;
                 }
                 case LESS_THAN -> {
                     if (canBeCompared) {
                         return ((Comparable<V>) value).compareTo(conditionValue) < 0;
                     }
-                    LOG.error("Invalid less_than operator for value of type " + value.getClass().getName()
+                    throw new NextailException("Invalid less_than operator for value of type " + value.getClass().getName()
                             + " and condition value of type " + value.getClass().getName());
-                    // TODO: Returning false for now, but consider to throw an exception here
-                    return false;
                 }
                 case NOT_EQUALS -> {
                     if (canBeCompared) {

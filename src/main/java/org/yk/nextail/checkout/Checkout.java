@@ -2,6 +2,7 @@ package org.yk.nextail.checkout;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yk.nextail.NextailException;
 import org.yk.nextail.cart.CartItem;
 import org.yk.nextail.price.PricingRule;
 
@@ -150,12 +151,12 @@ public class Checkout {
                     if (pra.getValue() instanceof Number) {
                         filteredCartItems.forEach(ci -> {
                             Double discount = ci.getPrice().doubleValue() - (pra.getValue()).doubleValue();
-                            ci.setDiscount(ci.getDiscount() + discount);
+                            ci.setDiscount(discount);
                             LOG.info("Applied CART_ITEM_FIXED_PRICE action rule discount = " + discount
                                     + " for cart item = " + ci.getCode());
                         });
                     } else {
-                        // TODO: Handle error
+                        throw new NextailException("Pricing rule action value is not a number");
                     }
                 }
                 case CART_ITEM_DISCOUNT_PERCENT -> {
@@ -168,11 +169,11 @@ public class Checkout {
                             ci.setDiscount(ci.getDiscount() + discount);
                         });
                     } else {
-                        // TODO: Handle error
+                        throw new NextailException("Pricing rule action value is not a number");
                     }
                 }
                 default -> {
-                    // TODO: Handle error
+                    throw new NextailException("Invalid pricing rule action type");
                 }
             }
         });
