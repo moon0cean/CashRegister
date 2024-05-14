@@ -21,5 +21,8 @@ Nextail cash-register is the new generation POS application with the unique goal
 * Git
 
 ## How it works
+A checkout process has been implemented, which currently allows to scan cart items and apply pricing rules.
+Pricing rules contain a set of conditions that must be evaluated positively in order to apply their corresponding actions.
 
 ## Testing the app
+CheckoutTest includes several examples that must be passed in order to validate the expected implementation.
