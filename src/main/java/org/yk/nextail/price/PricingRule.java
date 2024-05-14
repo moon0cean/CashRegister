@@ -75,10 +75,10 @@ public class PricingRule {
         public boolean evalCondition(V value) {
             if (!value.getClass().isAssignableFrom(conditionValue.getClass())) {
                 // FIXME: throw an exception here
-                LOG.error("Value class " + value.getClass().getName() + " can't be assigned from " + conditionValue.getClass().getName());
+                LOG.error("Eval condition: Value class " + value.getClass().getName() + " can't be assigned from condition class " + conditionValue.getClass().getName());
                 return false;
             } else {
-                LOG.debug("Value class " + value.getClass().getName() + " can be assigned from " + conditionValue.getClass().getName());
+                LOG.debug("Eval condition: value class " + value.getClass().getName() + " can be assigned from condition class " + conditionValue.getClass().getName());
             }
             boolean canBeCompared = false;
             if (value instanceof Comparable && conditionValue instanceof Comparable) {

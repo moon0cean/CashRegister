@@ -67,7 +67,6 @@ public class Checkout {
                 LOG.info("Evaluating CART_ITEM_CODE condition...");
                 PricingRule.PriceRuleCondition<String> productCodeCondition = (PricingRule.PriceRuleCondition<String>) productCodeConditionOptional.get();
 
-
                 filteredCartItems = cartItems.stream()
                         .filter(ci -> productCodeCondition.evalCondition(ci.getCode()))
                         .collect(Collectors.toList());
