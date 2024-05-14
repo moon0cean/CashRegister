@@ -31,8 +31,7 @@ public class Checkout {
      *
      * @param cartItem The cart item to be added into Checkout
      */
-    public void scan(CartItem cartItem) {
-        // TODO: consider concurrency
+    public synchronized void scan(CartItem cartItem) {
         LOG.info("Scanning new cart item [" + cartItem.getCode() + "]");
         cartItems.add(cartItem);
         evaluateAndApplyPricingRules();
@@ -56,6 +55,9 @@ public class Checkout {
     private void evaluateAndApplyPricingRules() {
         pricingRules.stream().forEach(pr -> {
             List<CartItem> filteredCartItems = cartItems;
+            if (pr.getConditions() == null || (pr.getConditions() == null && pr.getActions() == null)) {
+                return;
+            }
 
             // 1. Firstly, evaluate CART_ITEM_CODE condition when present in order to trim down the stream
             Optional<PricingRule.PriceRuleCondition<?>> productCodeConditionOptional =
@@ -109,14 +111,20 @@ public class Checkout {
                 PricingRule.PriceRuleCondition<Integer> cartItemXQuantityCondition =
                         (PricingRule.PriceRuleCondition<Integer>) cartItemXQuantityConditionOptional.get();
 
-                Integer cartItemXQuantity = Math.round(filteredCartItems.size() / cartItemXQuantityCondition.getConditionValue());
+                Integer cartItemXQuantity = Math.round(
+                        (filteredCartItems.size() / cartItemXQuantityCondition.getConditionValue())
+                );
+                LOG.debug("Cart item X quantity = " + cartItemXQuantity);
                 if (cartItemXQuantity > 0) {
-                    LOG.info("Found " + cartItemXQuantity
+                    Integer cartItemSize = cartItemXQuantityCondition.getConditionValue() - cartItemXQuantity;
+                    LOG.info("Found " + cartItemSize
                             + " cart item occurrence/s for CART_ITEM_X_QUANTITY condition ["
                             + cartItemXQuantityCondition.getConditionOperator().name()
                             + " " + cartItemXQuantityCondition.getConditionValue()
                             + "]");
-                    filteredCartItems = filteredCartItems.subList(0, cartItemXQuantity);
+
+                    filteredCartItems = filteredCartItems.subList(0, cartItemSize);
+                    LOG.debug("Cart items filtered size = " + filteredCartItems.size());
                 } else {
                     filteredCartItems = new ArrayList<>();
                 }
@@ -131,18 +139,19 @@ public class Checkout {
     /**
      * Apply rule actions for a given list of cart items
      *
-     * @param cartItems        The cart items filtered by the conditions evaluation
+     * @param filteredCartItems        The cart items filtered by the conditions evaluation
      * @param priceRuleActions list of actions to apply
      */
-    private void applyPricingRuleActions(List<CartItem> cartItems, List<PricingRule.PriceRuleAction<?>> priceRuleActions) {
+    private void applyPricingRuleActions(List<CartItem> filteredCartItems, List<PricingRule.PriceRuleAction<?>> priceRuleActions) {
+        // FIXME: possible incompatibilities between different actions when defined for the same pricing rule
         priceRuleActions.forEach(pra -> {
             switch (pra.getPriceRuleActionType()) {
                 case CART_ITEM_FIXED_PRICE -> {
                     LOG.info("Applying CART_ITEM_FIXED_PRICE action rule [" + pra.getValue() + "]");
                     if (pra.getValue() instanceof Number) {
-                        cartItems.forEach(ci -> {
+                        filteredCartItems.forEach(ci -> {
                             Double discount = ci.getPrice().doubleValue() - (pra.getValue()).doubleValue();
-                            ci.setDiscount(discount);
+                            ci.setDiscount(ci.getDiscount() + discount);
                             LOG.info("Applied CART_ITEM_FIXED_PRICE action rule discount = " + discount
                                     + " for cart item = " + ci.getCode());
                         });
@@ -153,14 +162,14 @@ public class Checkout {
                 case CART_ITEM_DISCOUNT_PERCENT -> {
                     LOG.info("Applying CART_ITEM_DISCOUNT_PERCENT action rule using discount percentage = " + pra.getValue() + "%");
                     if (pra.getValue() instanceof Number) {
-                        cartItems.forEach(ci -> {
+                        filteredCartItems.forEach(ci -> {
                             Double discount = (ci.getPrice().doubleValue()) * (pra.getValue().doubleValue() / 100);
                             if (discount > ci.getPrice()) { // Never apply a discount greater than the price of the item
                                 discount = ci.getPrice();
                             }
                             LOG.info("Applied CART_ITEM_DISCOUNT_PERCENT action rule discount = " + discount
                                     + " for cart item = " + ci.getCode());
-                            ci.setDiscount(discount);
+                            ci.setDiscount(ci.getDiscount() + discount);
                         });
                     } else {
                         // TODO: Handle error
