@@ -164,9 +164,6 @@ public class Checkout {
                     if (pra.getValue() instanceof Number) {
                         filteredCartItems.forEach(ci -> {
                             Double discount = (ci.getPrice().doubleValue()) * (pra.getValue().doubleValue() / 100);
-                            if (discount > ci.getPrice()) { // Never apply a discount greater than the price of the item
-                                discount = ci.getPrice();
-                            }
                             LOG.info("Applied CART_ITEM_DISCOUNT_PERCENT action rule discount = " + discount
                                     + " for cart item = " + ci.getCode());
                             ci.setDiscount(ci.getDiscount() + discount);

@@ -36,6 +36,10 @@ public class CartItem {
     }
 
     public void setDiscount(Double discount) {
+        // Never apply a discount greater than the price of the item
+        if (discount > this.getPrice()) {
+            discount = this.getPrice();
+        }
         this.discount = discount;
     }
 }
