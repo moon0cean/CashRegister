@@ -6,7 +6,7 @@ public class CartItem {
     private final String name;
     private final Double price;
     private final String currency;
-    private Double discount;
+    private Double discount = 0.00;
 
     public CartItem(String code, String name, Double price, String currency) {
         this.code = code;
