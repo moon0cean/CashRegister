@@ -152,10 +152,10 @@ public class PricingRule {
                     priceRuleCondition.conditionOperator = PriceRuleConditionOperator.EQUALS;
                 }
                 if (priceRuleCondition.conditionType == null) {
-                    throw new NextailException("Missing condition type while building condition");
+                    throw new NextailException("Missing condition type while building the pricing rule condition");
                 }
                 if (priceRuleCondition.conditionValue == null) {
-                    throw new NextailException("Missing condition value while building condition");
+                    throw new NextailException("Missing condition value while building the pricing rule condition");
                 }
                 return priceRuleCondition;
             }
@@ -211,7 +211,12 @@ public class PricingRule {
             }
 
             public PriceRuleAction build() {
-                // FIXME: ensure a valid action is created and use defaults if not (when possible)
+                if (priceRuleAction.priceRuleActionType == null) {
+                    throw new NextailException("Missing action type while building the pricing rule action");
+                }
+                if (priceRuleAction.value == null) {
+                    throw new NextailException("Missing action value while building the pricing rule action");
+                }
                 return priceRuleAction;
             }
         }
