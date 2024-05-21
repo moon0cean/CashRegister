@@ -148,7 +148,15 @@ public class PricingRule {
             }
 
             public PriceRuleCondition build() {
-                // FIXME: ensure a valid condition is created and use defaults if not (when possible)
+                if (priceRuleCondition.conditionOperator == null) {
+                    priceRuleCondition.conditionOperator = PriceRuleConditionOperator.EQUALS;
+                }
+                if (priceRuleCondition.conditionType == null) {
+                    throw new NextailException("Missing condition type while building condition");
+                }
+                if (priceRuleCondition.conditionValue == null) {
+                    throw new NextailException("Missing condition value while building condition");
+                }
                 return priceRuleCondition;
             }
         }
