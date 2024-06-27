@@ -2,7 +2,6 @@ package org.yk.nextail.checkout;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yk.nextail.NextailException;
 import org.yk.nextail.cart.CartItem;
 import org.yk.nextail.price.PricingRule;
 
@@ -51,10 +50,9 @@ public class Checkout {
      * NOTE: currently there's a limitation for composed conditions,
      * which are always being evaluated using AND operator
      *
-     * @return
      */
     private void evaluateAndApplyPricingRules() {
-        pricingRules.stream().forEach(pr -> {
+        pricingRules.forEach(pr -> {
             List<CartItem> filteredCartItems = cartItems;
             if (pr.getConditions() == null || (pr.getConditions() == null && pr.getActions() == null)) {
                 return;
@@ -112,11 +110,11 @@ public class Checkout {
                         (PricingRule.PriceRuleCondition<Integer>) cartItemXQuantityConditionOptional.get();
 
                 Integer cartItemXQuantity = Math.round(
-                        (filteredCartItems.size() / cartItemXQuantityCondition.getConditionValue())
+                        ((float) filteredCartItems.size() / cartItemXQuantityCondition.getConditionValue())
                 );
                 LOG.debug("Cart item X quantity = " + cartItemXQuantity);
                 if (cartItemXQuantity > 0) {
-                    Integer cartItemSize = cartItemXQuantityCondition.getConditionValue() - cartItemXQuantity;
+                    int cartItemSize = cartItemXQuantityCondition.getConditionValue() - cartItemXQuantity;
                     LOG.info("Found " + cartItemSize
                             + " cart item occurrence/s for CART_ITEM_X_QUANTITY condition ["
                             + cartItemXQuantityCondition.getConditionOperator().name()
@@ -128,54 +126,14 @@ public class Checkout {
                 } else {
                     filteredCartItems = new ArrayList<>();
                 }
+
+                if (!filteredCartItems.isEmpty()) {
+                    final List<CartItem> finalFilteredCartItems = filteredCartItems;
+                    pr.getActions().forEach(pra -> pra.applyPricingRuleAction(finalFilteredCartItems));
+                }
             }
 
-            if (!filteredCartItems.isEmpty()) {
-                applyPricingRuleActions(filteredCartItems, pr.getActions());
-            }
         });
     }
 
-    /**
-     * Apply rule actions for a given list of cart items
-     *
-     * @param filteredCartItems        The cart items filtered by the conditions evaluation
-     * @param priceRuleActions list of actions to apply
-     */
-    private void applyPricingRuleActions(List<CartItem> filteredCartItems, List<PricingRule.PriceRuleAction<?>> priceRuleActions) {
-        // FIXME: possible incompatibilities between different actions when defined for the same pricing rule
-        priceRuleActions.forEach(pra -> {
-            switch (pra.getPriceRuleActionType()) {
-                case CART_ITEM_FIXED_PRICE -> {
-                    LOG.info("Applying CART_ITEM_FIXED_PRICE action rule [" + pra.getValue() + "]");
-                    if (pra.getValue() instanceof Number) {
-                        filteredCartItems.forEach(ci -> {
-                            Double discount = ci.getPrice().doubleValue() - (pra.getValue()).doubleValue();
-                            ci.setDiscount(discount);
-                            LOG.info("Applied CART_ITEM_FIXED_PRICE action rule discount = " + discount
-                                    + " for cart item = " + ci.getCode());
-                        });
-                    } else {
-                        throw new NextailException("Pricing rule action value is not a number");
-                    }
-                }
-                case CART_ITEM_DISCOUNT_PERCENT -> {
-                    LOG.info("Applying CART_ITEM_DISCOUNT_PERCENT action rule using discount percentage = " + pra.getValue() + "%");
-                    if (pra.getValue() instanceof Number) {
-                        filteredCartItems.forEach(ci -> {
-                            Double discount = (ci.getPrice().doubleValue()) * (pra.getValue().doubleValue() / 100);
-                            LOG.info("Applied CART_ITEM_DISCOUNT_PERCENT action rule discount = " + discount
-                                    + " for cart item = " + ci.getCode());
-                            ci.setDiscount(ci.getDiscount() + discount);
-                        });
-                    } else {
-                        throw new NextailException("Pricing rule action value is not a number");
-                    }
-                }
-                default -> {
-                    throw new NextailException("Invalid pricing rule action type");
-                }
-            }
-        });
-    }
 }

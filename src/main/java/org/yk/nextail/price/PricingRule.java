@@ -3,6 +3,7 @@ package org.yk.nextail.price;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yk.nextail.NextailException;
+import org.yk.nextail.cart.CartItem;
 
 import java.util.List;
 
@@ -73,6 +74,7 @@ public class PricingRule {
         public V getConditionValue() {
             return conditionValue;
         }
+
         public boolean evalCondition(V value) {
             if (!value.getClass().isAssignableFrom(conditionValue.getClass())) {
                 throw new NextailException("Eval condition: Value class " + value.getClass().getName()
@@ -80,10 +82,7 @@ public class PricingRule {
             } else {
                 LOG.debug("Eval condition: value class " + value.getClass().getName() + " can be assigned from condition class " + conditionValue.getClass().getName());
             }
-            boolean canBeCompared = false;
-            if (value instanceof Comparable && conditionValue instanceof Comparable) {
-                canBeCompared = true;
-            }
+            boolean canBeCompared = value instanceof Comparable && conditionValue instanceof Comparable;
             switch (getConditionOperator()) {
                 case EQUALS -> {
                     if (canBeCompared) {
@@ -130,7 +129,7 @@ public class PricingRule {
         }
 
         public static class Builder<V> {
-            private PriceRuleCondition priceRuleCondition = new PriceRuleCondition<V>();
+            private final PriceRuleCondition<V> priceRuleCondition = new PriceRuleCondition<>();
 
             public PriceRuleCondition.Builder<V> addConditionOperator(PriceRuleConditionOperator conditionOperator) {
                 priceRuleCondition.conditionOperator = conditionOperator;
@@ -147,7 +146,7 @@ public class PricingRule {
                 return this;
             }
 
-            public PriceRuleCondition build() {
+            public PriceRuleCondition<V> build() {
                 if (priceRuleCondition.conditionOperator == null) {
                     priceRuleCondition.conditionOperator = PriceRuleConditionOperator.EQUALS;
                 }
@@ -198,19 +197,19 @@ public class PricingRule {
         }
 
         public static class Builder<V extends Number> {
-            PriceRuleAction priceRuleAction = new PriceRuleAction();
+            private final PriceRuleAction<V> priceRuleAction = new PriceRuleAction<>();
 
-            public PriceRuleAction.Builder addActionType(PriceRuleActionType actionType) {
+            public PriceRuleAction.Builder<V> addActionType(PriceRuleActionType actionType) {
                 priceRuleAction.priceRuleActionType = actionType;
                 return this;
             }
 
-            public PriceRuleAction.Builder addActionValue(V value) {
+            public PriceRuleAction.Builder<V> addActionValue(V value) {
                 priceRuleAction.value = value;
                 return this;
             }
 
-            public PriceRuleAction build() {
+            public PriceRuleAction<V> build() {
                 if (priceRuleAction.priceRuleActionType == null) {
                     throw new NextailException("Missing action type while building the pricing rule action");
                 }
@@ -218,6 +217,44 @@ public class PricingRule {
                     throw new NextailException("Missing action value while building the pricing rule action");
                 }
                 return priceRuleAction;
+            }
+        }
+
+        /**
+         * Apply rule actions for a given list of cart items
+         *
+         * @param filteredCartItems The cart items filtered by the conditions evaluation
+         */
+        public void applyPricingRuleAction(List<CartItem> filteredCartItems) {
+            // FIXME: possible incompatibilities between different actions when defined for the same pricing rule
+            switch (this.getPriceRuleActionType()) {
+                case CART_ITEM_FIXED_PRICE -> {
+                    LOG.info("Applying CART_ITEM_FIXED_PRICE action rule [" + this.getValue() + "]");
+                    if (this.getValue() != null) {
+                        filteredCartItems.forEach(ci -> {
+                            Double discount = ci.getPrice() - (this.getValue()).doubleValue();
+                            ci.setDiscount(discount);
+                            LOG.info("Applied CART_ITEM_FIXED_PRICE action rule discount = " + discount
+                                    + " for cart item = " + ci.getCode());
+                        });
+                    } else {
+                        throw new NextailException("Pricing rule action value is not a number");
+                    }
+                }
+                case CART_ITEM_DISCOUNT_PERCENT -> {
+                    LOG.info("Applying CART_ITEM_DISCOUNT_PERCENT action rule using discount percentage = " + this.getValue() + "%");
+                    if (this.getValue() != null) {
+                        filteredCartItems.forEach(ci -> {
+                            Double discount = ci.getPrice() * (this.getValue().doubleValue() / 100);
+                            LOG.info("Applied CART_ITEM_DISCOUNT_PERCENT action rule discount = " + discount
+                                    + " for cart item = " + ci.getCode());
+                            ci.setDiscount(ci.getDiscount() + discount);
+                        });
+                    } else {
+                        throw new NextailException("Pricing rule action value is not a number");
+                    }
+                }
+                default -> throw new NextailException("Invalid pricing rule action type");
             }
         }
 
