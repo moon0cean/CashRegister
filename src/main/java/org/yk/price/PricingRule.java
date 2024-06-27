@@ -1,9 +1,9 @@
-package org.yk.nextail.price;
+package org.yk.price;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yk.nextail.NextailException;
-import org.yk.nextail.cart.CartItem;
+import org.yk.NextailException;
+import org.yk.cart.CartItem;
 
 import java.util.List;
 

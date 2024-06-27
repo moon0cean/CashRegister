@@ -1,9 +1,9 @@
-package org.yk.nextail.checkout;
+package org.yk.checkout;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yk.nextail.cart.CartItem;
-import org.yk.nextail.price.PricingRule;
+import org.yk.cart.CartItem;
+import org.yk.price.PricingRule;
 
 import java.util.ArrayList;
 import java.util.List;

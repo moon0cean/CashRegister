@@ -1,4 +1,4 @@
-package org.yk.nextail.cart;
+package org.yk.cart;
 
 public class CartItem {
 

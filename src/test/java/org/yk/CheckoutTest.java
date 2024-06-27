@@ -1,20 +1,20 @@
-package org.yk.nextail;
+package org.yk;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yk.nextail.cart.CartItem;
-import org.yk.nextail.checkout.Checkout;
-import org.yk.nextail.price.PricingRule;
+import org.yk.cart.CartItem;
+import org.yk.checkout.Checkout;
+import org.yk.price.PricingRule;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.yk.nextail.CheckoutTest.PredefinedCartItems.PANTS;
-import static org.yk.nextail.CheckoutTest.PredefinedCartItems.TSHIRT;
-import static org.yk.nextail.CheckoutTest.PredefinedCartItems.VOUCHER;
+import static org.yk.CheckoutTest.PredefinedCartItems.PANTS;
+import static org.yk.CheckoutTest.PredefinedCartItems.TSHIRT;
+import static org.yk.CheckoutTest.PredefinedCartItems.VOUCHER;
 
 public class CheckoutTest {
     private static final Logger LOG = LoggerFactory.getLogger(CheckoutTest.class);
